@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Undertone - Real News</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Poppins', sans-serif; 
+      background: #ffffff; 
+      color: #111; 
+      min-height: 100vh; 
+      display: flex; 
+      flex-direction: column; 
+      scroll-behavior: smooth;
+    }
+    header { 
+      background: #ffffff; 
+      color: #111; 
+      padding: 40px 20px; 
+      text-align: center; 
+      border-bottom: 1px solid #eee;
+    }
+    header h1 { 
+      font-size: 3rem; 
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    header p { font-size: 1.2rem; opacity: 0.7; }
+
+    .search-box, .dropdown-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      padding: 0 20px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    input[type="text"], select {
+      padding: 12px 20px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 2px solid #111;
+      background-color: #fff;
+      color: #111;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    input[type="text"]:hover, input[type="text"]:focus, select:hover, select:focus {
+      border-color: #333;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    }
+    select {
+      appearance: none;
+      cursor: pointer;
+    }
+    main { 
+      flex: 1; 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+      gap: 30px; 
+      padding: 50px 20px; 
+      max-width: 1200px; 
+      margin: auto; 
+    }
+    .news-card {
+      background: white;
+      border: 2px solid #111;
+      border-radius: 16px;
+      overflow: hidden;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    .news-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .news-content h2 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: #111;
+      height: 60px;
+      overflow: hidden;
+    }
+    .news-content p {
+      font-size: 0.95rem;
+      color: #333;
+      margin-bottom: 15px;
+    }
+    .news-content a {
+      display: inline-block;
+      font-size: 0.95rem;
+      color: #111;
+      text-decoration: underline;
+    }
+    .news-content a:hover {
+      text-decoration: none;
+    }
+    footer {
+      background: #fff;
+      color: #888;
+      text-align: center;
+      padding: 20px;
+      font-size: 0.95rem;
+      border-top: 1px solid #eee;
+    }
+    .loading-text {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #555;
+      margin-top: 50px;
+      animation: blink 1.5s infinite ease-in-out;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @media (max-width: 768px) {
+      header h1 { font-size: 2.5rem; }
+      main { padding: 30px 15px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Undertone</h1>
+    <p>Real Headlines. Fresh Every Time.</p>
+  </header>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search by title...">
+
+    <select id="providerSelect">
+      <option value="all">All News Providers</option>
+      <option value="cnn">CNN</option>
+      <option value="abc">ABC</option>
+      <option value="nbc">NBC</option>
+      <option value="foxnews">Fox News</option>
+      <option value="espn">ESPN</option>
+    </select>
+  </div>
+
+  <main id="news-container">
+    <div class="loading-text">Loading news...</div>
+  </main>
+
+  <footer>
+    &copy; 2025 Undertone News. Powered by Overtone API
+  </footer>
+
+  <script>
+    const apiUrlBase = 'https://api.overtone.news/headlines';
+    const searchInput = document.getElementById('searchInput');
+    const providerSelect = document.getElementById('providerSelect');
+    const container = document.getElementById('news-container');
+
+    async function fetchNews() {
+      container.innerHTML = '<div class="loading-text">Loading news...</div>';
+      const searchQuery = searchInput.value.trim();
+      const provider = providerSelect.value;
+
+      let apiUrl = `${apiUrlBase}?`;
+      if (searchQuery) apiUrl += `title=${encodeURIComponent(searchQuery)}&`;
+      if (provider !== 'all') apiUrl += `link=${provider}`;
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        const articles = data.results || [];
+
+        container.innerHTML = '';
+
+        if (!articles.length) {
+          container.innerHTML = '<p style="text-align:center; margin-top:50px;">No news available at the moment.</p>';
+          return;
+        }
+
+        articles.slice(0, 18).forEach(article => {
+          const card = document.createElement('div');
+          card.className = 'news-card';
+          card.innerHTML = `
+            <div class="news-content">
+              <h2>${article.title || 'No Title'}</h2>
+              <p>${article.source || 'Unknown Source'}</p>
+              <a href="${article.link}" target="_blank">Read full article</a>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+      } catch (error) {
+        console.error('Error fetching news:', error);
+        container.innerHTML = '<p style="text-align:center; margin-top:50px;">Failed to load news. Try again later.</p>';
+      }
+    }
+
+    searchInput.addEventListener('input', fetchNews);
+    providerSelect.addEventListener('change', fetchNews);
+
+    document.addEventListener('DOMContentLoaded', fetchNews);
+  </script>
+</body>
+</html>
